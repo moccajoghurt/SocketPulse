@@ -63,13 +63,18 @@ public class SocketService : ISocketService
         var json = JObject.Parse(message);
         var typeName = json["typename"]!.ToString();
         var functionName = json["function"]!.ToString();
-        var arguments = (JArray)json["arguments"]!;
+        var arguments = (JArray?)json["arguments"];
+        var argumentList = new List<string>();
+        if (arguments != null)
+        {
+            argumentList.AddRange(arguments.Select(arg => arg.ToString()).ToList());
+        }
 
         var result = typeName switch
         {
-            "action" => ExecuteAction(functionName, arguments.Select(arg => arg.ToString()).ToList()),
-            "condition" => ExecuteCondition(functionName, arguments.Select(arg => arg.ToString()).ToList()),
-            "data" => ExecuteDataNode(functionName, arguments.Select(arg => arg.ToString()).ToList()),
+            "action" => ExecuteAction(functionName, argumentList),
+            "condition" => ExecuteCondition(functionName, argumentList),
+            "data" => ExecuteDataNode(functionName, argumentList),
             _ => throw new InvalidOperationException($"Unsupported type: {typeName}")
         };
         return result;

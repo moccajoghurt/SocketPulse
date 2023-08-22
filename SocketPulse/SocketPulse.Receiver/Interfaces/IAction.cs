@@ -1,5 +1,4 @@
-﻿using SocketPulse.Receiver.CommandGeneration;
-using SocketPulse.Shared;
+﻿using SocketPulse.Shared;
 
 namespace SocketPulse.Receiver.Interfaces;
 public interface IAction

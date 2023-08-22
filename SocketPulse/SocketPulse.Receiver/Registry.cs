@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using SocketPulse.Receiver.CommandGeneration;
 using SocketPulse.Receiver.CommandInvokation;
@@ -10,7 +11,7 @@ namespace SocketPulse.Receiver;
 
 public static class Registry
 {
-    public static void AddSocketPulseReceiver(this IServiceCollection services, Assembly[] assemblies)
+    public static void AddSocketPulseReceiver(this IServiceCollection services, List<Assembly> assemblies)
     {
         services.AddSingleton<ICommandGenerator, CommandGenerator>();
         services.AddSingleton<ICommandInvoker, CommandInvoker>();
@@ -22,9 +23,9 @@ public static class Registry
         RegisterCommandType(services, typeof(IData), assemblies);
     }
 
-    private static void RegisterCommandType(IServiceCollection services, Type type, Assembly[] assemblies)
+    private static void RegisterCommandType(IServiceCollection services, Type type, ICollection<Assembly> assemblies)
     {
-        Console.WriteLine(assemblies[0].GetName().Name);
+        assemblies.Add(typeof(Registry).Assembly);
         var types = assemblies.SelectMany(s => s.GetTypes())
             .Where(t => type.IsAssignableFrom(t) && t.IsClass).ToList();
         foreach (var t in types)

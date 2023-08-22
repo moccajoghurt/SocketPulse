@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using NetMQ;
 using NetMQ.Sockets;
@@ -15,7 +16,7 @@ public class SocketServiceTest
 
     public SocketServiceTest()
     {
-        _serviceCollection.AddSocketPulseReceiver(new[] { typeof(SocketServiceTest).Assembly });
+        _serviceCollection.AddSocketPulseReceiver(new List<Assembly> { typeof(SocketServiceTest).Assembly });
         _serviceProvider = _serviceCollection.BuildServiceProvider();
     }
 
@@ -45,6 +46,37 @@ public class SocketServiceTest
         // Assert
         var reply = JsonConvert.DeserializeObject<Reply>(replyStr);
         Assert.Equal(State.Success, reply?.State);
+        service?.Stop();
+    }
+
+    [Fact]
+    public void AllNodesRequested_ReturnsAllNodes()
+    {
+        // Arrange
+        var service = _serviceProvider.GetService<ISocketService>();
+        var cts = new CancellationTokenSource();
+        Task.Run(() => service?.Start("tcp://*:8080", cts.Token), cts.Token);
+        using var client = new RequestSocket("tcp://localhost:8080");
+        var data = new
+        {
+            typename = "data",
+            function = "GetAllNodes",
+        };
+        var message = JsonConvert.SerializeObject(data);
+
+        // Act
+        client.SendFrame(message);
+        var replyStr = client.ReceiveFrameString();
+
+        // Assert
+        var reply = JsonConvert.DeserializeObject<Reply>(replyStr);
+        Assert.NotNull(reply?.Content);
+        var content = JsonConvert.DeserializeObject<NodeInfo>(reply.Content);
+        Assert.NotNull(content);
+        Assert.Contains(content.Actions, s => s.Contains("TestAction"));
+        Assert.Contains(content.Conditions, s => s.Contains("TestCondition"));
+        Assert.Contains(content.Data, s => s.Contains("TestData"));
+        Assert.Contains(content.Data, s => s.Contains("GetAllNodes"));
         service?.Stop();
     }
 }
