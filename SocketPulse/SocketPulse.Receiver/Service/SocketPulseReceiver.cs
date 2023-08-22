@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using SocketPulse.Receiver.CommandInvokation;
+using SocketPulse.Receiver.CommandInvocation;
 using SocketPulse.Receiver.Interfaces;
 using SocketPulse.Receiver.Service.SocketWrapping;
 using SocketPulse.Shared;
@@ -69,9 +69,9 @@ public class SocketPulseReceiver : ISocketPulseReceiver
 
         var result = request.Type switch
         {
-            "action" => ExecuteAction(request.Name, argumentList),
-            "condition" => ExecuteCondition(request.Name, argumentList),
-            "data" => ExecuteDataNode(request.Name, argumentList),
+            RequestType.Action => ExecuteAction(request.Name, argumentList),
+            RequestType.Condition => ExecuteCondition(request.Name, argumentList),
+            RequestType.Data => ExecuteDataNode(request.Name, argumentList),
             _ => throw new InvalidOperationException($"Unsupported type: {request.Type}")
         };
         return result;

@@ -5,26 +5,27 @@ using NetMQ.Sockets;
 using Newtonsoft.Json;
 using SocketPulse.Receiver.Service;
 using SocketPulse.Shared;
+using SocketPulse.Test.Shared.Models;
 using Xunit;
 
 namespace SocketPulse.Receiver.Test.Integration;
 
-public class SocketPulseReceiver
+public class SocketPulseReceiverTest
 {
     private readonly ServiceCollection _serviceCollection = new();
     private readonly IServiceProvider _serviceProvider;
 
-    public SocketPulseReceiver()
+    public SocketPulseReceiverTest()
     {
-        _serviceCollection.AddSocketPulseReceiver(new List<Assembly> { typeof(SocketPulseReceiver).Assembly });
+        _serviceCollection.AddSocketPulseReceiver(new List<Assembly> { typeof(TestAction).Assembly });
         _serviceProvider = _serviceCollection.BuildServiceProvider();
     }
 
     [Theory]
-    [InlineData("action", "TestAction", new[] { "arg1", "arg2", "arg3" })]
-    [InlineData("condition", "TestCondition", new[] { "arg1", "arg2", "arg3" })]
-    [InlineData("data", "TestData", new[] { "arg1", "arg2", "arg3" })]
-    public void ActionSent_ShouldReturnSuccess(string typeName, string functionName, string[] arguments)
+    [InlineData(RequestType.Action, "TestAction", new[] { "arg1", "arg2", "arg3" })]
+    [InlineData(RequestType.Condition, "TestCondition", new[] { "arg1", "arg2", "arg3" })]
+    [InlineData(RequestType.Data, "TestData", new[] { "arg1", "arg2", "arg3" })]
+    public void ActionSent_ShouldReturnSuccess(RequestType type, string functionName, string[] arguments)
     {
         // Arrange
         var service = _serviceProvider.GetService<ISocketPulseReceiver>();
@@ -33,7 +34,7 @@ public class SocketPulseReceiver
         using var client = new RequestSocket("tcp://localhost:8080");
         var data = new Request
         {
-            Type = typeName,
+            Type = type,
             Name = functionName,
             Arguments = new List<string>(arguments)
         };
@@ -60,7 +61,7 @@ public class SocketPulseReceiver
         using var client = new RequestSocket("tcp://localhost:8080");
         var data = new Request
         {
-            Type = "data",
+            Type = RequestType.Data,
             Name = "GetAllNodes",
         };
         var message = JsonConvert.SerializeObject(data);

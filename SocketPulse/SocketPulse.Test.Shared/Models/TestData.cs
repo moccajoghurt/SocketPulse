@@ -1,6 +1,6 @@
 ﻿using SocketPulse.Receiver.Interfaces;
 
-namespace SocketPulse.Receiver.Test.Integration.Models;
+namespace SocketPulse.Test.Shared.Models;
 
 public class TestData : IData
 {

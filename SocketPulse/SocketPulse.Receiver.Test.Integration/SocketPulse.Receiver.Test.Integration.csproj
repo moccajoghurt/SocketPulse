@@ -25,6 +25,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\SocketPulse.Receiver\SocketPulse.Receiver.csproj" />
+      <ProjectReference Include="..\SocketPulse.Test.Shared\SocketPulse.Test.Shared.csproj" />
     </ItemGroup>
 
 </Project>

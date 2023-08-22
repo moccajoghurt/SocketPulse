@@ -1,6 +1,6 @@
 ﻿using SocketPulse.Receiver.CommandGeneration;
 
-namespace SocketPulse.Receiver.CommandInvokation;
+namespace SocketPulse.Receiver.CommandInvocation;
 
 public class CommandInvoker : ICommandInvoker
 {
