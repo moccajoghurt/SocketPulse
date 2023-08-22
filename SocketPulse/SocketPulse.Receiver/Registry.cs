@@ -16,7 +16,7 @@ public static class Registry
         services.AddSingleton<ICommandGenerator, CommandGenerator>();
         services.AddSingleton<ICommandInvoker, CommandInvoker>();
         services.AddSingleton<IReceiverSocket, ReceiverSocket>();
-        services.AddSingleton<ISocketService, SocketService>();
+        services.AddSingleton<ISocketPulseReceiver, SocketPulseReceiver>();
 
         RegisterCommandType(services, typeof(ICondition), assemblies);
         RegisterCommandType(services, typeof(IAction), assemblies);

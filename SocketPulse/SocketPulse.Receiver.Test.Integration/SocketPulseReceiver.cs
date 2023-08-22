@@ -9,14 +9,14 @@ using Xunit;
 
 namespace SocketPulse.Receiver.Test.Integration;
 
-public class SocketServiceTest
+public class SocketPulseReceiver
 {
     private readonly ServiceCollection _serviceCollection = new();
     private readonly IServiceProvider _serviceProvider;
 
-    public SocketServiceTest()
+    public SocketPulseReceiver()
     {
-        _serviceCollection.AddSocketPulseReceiver(new List<Assembly> { typeof(SocketServiceTest).Assembly });
+        _serviceCollection.AddSocketPulseReceiver(new List<Assembly> { typeof(SocketPulseReceiver).Assembly });
         _serviceProvider = _serviceCollection.BuildServiceProvider();
     }
 
@@ -27,16 +27,17 @@ public class SocketServiceTest
     public void ActionSent_ShouldReturnSuccess(string typeName, string functionName, string[] arguments)
     {
         // Arrange
-        var service = _serviceProvider.GetService<ISocketService>();
+        var service = _serviceProvider.GetService<ISocketPulseReceiver>();
         var cts = new CancellationTokenSource();
         Task.Run(() => service?.Start("tcp://*:8080", cts.Token), cts.Token);
         using var client = new RequestSocket("tcp://localhost:8080");
-        var data = new
+        var data = new Request
         {
-            typename = typeName,
-            function = functionName,
-            arguments
+            Type = typeName,
+            Name = functionName,
+            Arguments = new List<string>(arguments)
         };
+
         var message = JsonConvert.SerializeObject(data);
 
         // Act
@@ -53,14 +54,14 @@ public class SocketServiceTest
     public void AllNodesRequested_ReturnsAllNodes()
     {
         // Arrange
-        var service = _serviceProvider.GetService<ISocketService>();
+        var service = _serviceProvider.GetService<ISocketPulseReceiver>();
         var cts = new CancellationTokenSource();
         Task.Run(() => service?.Start("tcp://*:8080", cts.Token), cts.Token);
         using var client = new RequestSocket("tcp://localhost:8080");
-        var data = new
+        var data = new Request
         {
-            typename = "data",
-            function = "GetAllNodes",
+            Type = "data",
+            Name = "GetAllNodes",
         };
         var message = JsonConvert.SerializeObject(data);
 

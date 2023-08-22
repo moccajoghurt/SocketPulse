@@ -10,4 +10,8 @@
       <ProjectReference Include="..\SocketPulse.Shared\SocketPulse.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Service\" />
+    </ItemGroup>
+
 </Project>

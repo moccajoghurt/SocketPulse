@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using SocketPulse.Receiver.CommandInvokation;
 using SocketPulse.Receiver.Interfaces;
 using SocketPulse.Receiver.Service.SocketWrapping;
@@ -7,12 +6,12 @@ using SocketPulse.Shared;
 
 namespace SocketPulse.Receiver.Service;
 
-public class SocketService : ISocketService
+public class SocketPulseReceiver : ISocketPulseReceiver
 {
     private readonly ICommandInvoker _commandInvoker;
     private readonly IReceiverSocket _receiverSocket;
 
-    public SocketService(ICommandInvoker commandInvoker, IReceiverSocket receiverSocket)
+    public SocketPulseReceiver(ICommandInvoker commandInvoker, IReceiverSocket receiverSocket)
     {
         _commandInvoker = commandInvoker;
         _receiverSocket = receiverSocket;
@@ -60,22 +59,20 @@ public class SocketService : ISocketService
 
     private Reply HandleMessage(string message)
     {
-        var json = JObject.Parse(message);
-        var typeName = json["typename"]!.ToString();
-        var functionName = json["function"]!.ToString();
-        var arguments = (JArray?)json["arguments"];
+        var request = JsonConvert.DeserializeObject<Request>(message);
+        if (request == null) throw new InvalidOperationException("Invalid request");
         var argumentList = new List<string>();
-        if (arguments != null)
+        if (request.Arguments != null)
         {
-            argumentList.AddRange(arguments.Select(arg => arg.ToString()).ToList());
+            argumentList.AddRange(request.Arguments.Select(arg => arg.ToString()).ToList());
         }
 
-        var result = typeName switch
+        var result = request.Type switch
         {
-            "action" => ExecuteAction(functionName, argumentList),
-            "condition" => ExecuteCondition(functionName, argumentList),
-            "data" => ExecuteDataNode(functionName, argumentList),
-            _ => throw new InvalidOperationException($"Unsupported type: {typeName}")
+            "action" => ExecuteAction(request.Name, argumentList),
+            "condition" => ExecuteCondition(request.Name, argumentList),
+            "data" => ExecuteDataNode(request.Name, argumentList),
+            _ => throw new InvalidOperationException($"Unsupported type: {request.Type}")
         };
         return result;
     }

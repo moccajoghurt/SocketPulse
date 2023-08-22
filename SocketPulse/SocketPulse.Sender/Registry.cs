@@ -1,5 +1,5 @@
 ﻿namespace SocketPulse.Sender;
 
-public class Reply
+public class Registry
 {
 }
