@@ -18,10 +18,19 @@ public class GetAllNodes : IData
     {
         var data = new NodeInfo
         {
-            Actions = _commandGenerator.GetActions(),
-            Conditions = _commandGenerator.GetConditions(),
-            Data = _commandGenerator.GetDataNodes()
+            Actions = _commandGenerator.GetActions().Select(ExtractName).ToList(),
+            Conditions = _commandGenerator.GetConditions().Select(ExtractName).ToList(),
+            Data = _commandGenerator.GetDataNodes().Select(ExtractName).ToList(),
         };
         return JsonConvert.SerializeObject(data, Formatting.Indented);
+    }
+
+    private string ExtractName(string input)
+    {
+        var parts = input.Split(',');
+        if (parts.Length < 2)
+            return string.Empty;
+        var subParts = parts[0].Split('.');
+        return subParts[^1];
     }
 }
