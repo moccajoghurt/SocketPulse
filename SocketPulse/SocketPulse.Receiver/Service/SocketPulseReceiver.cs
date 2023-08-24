@@ -17,9 +17,9 @@ public class SocketPulseReceiver : ISocketPulseReceiver
         _receiverSocket = receiverSocket;
     }
 
-    public void Start(string address, CancellationToken cancellationToken)
+    public void Start(string address, CancellationToken cancellationToken, uint tickRateMs = 100)
     {
-
+        SocketPulseReceiverSettings.TickRateMs = tickRateMs;
         _receiverSocket.InitSocket(address);
 
         while (!cancellationToken.IsCancellationRequested)

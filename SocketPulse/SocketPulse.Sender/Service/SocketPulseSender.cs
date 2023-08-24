@@ -31,4 +31,21 @@ public class SocketPulseSender : ISocketPulseSender
         return JsonConvert.DeserializeObject<Reply>(replyString) ??
                throw new InvalidOperationException("Could not deserialize reply");
     }
+
+    public uint GetTickRate()
+    {
+        var request = new Request { Type = RequestType.Data, Name = "GetTickRate" };
+        var reply = SendRequest(request);
+        return Convert.ToUInt32(reply.Content);
+    }
+
+    public NodeInfo GetAllNodes()
+    {
+        var request = new Request { Type = RequestType.Data, Name = "GetAllNodes" };
+        var reply = SendRequest(request);
+        return JsonConvert.DeserializeObject<NodeInfo>(reply.Content ??
+                                                       throw new InvalidOperationException(
+                                                           "Could not deserialize GetAllNodes")) ??
+               throw new InvalidOperationException("Could not deserialize GetAllNodes");
+    }
 }

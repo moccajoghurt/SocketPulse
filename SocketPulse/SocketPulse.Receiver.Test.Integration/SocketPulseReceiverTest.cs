@@ -79,6 +79,7 @@ public class SocketPulseReceiverTest
         Assert.Contains(content.Conditions, s => s.Contains("TestCondition"));
         Assert.Contains(content.Data, s => s.Contains("TestData"));
         Assert.Contains(content.Data, s => s.Contains("GetAllNodes"));
+        Assert.Contains(content.Data, s => s.Contains("GetTickRate"));
         service?.Stop();
     }
 }
