@@ -25,7 +25,14 @@ public class SocketPulseReceiver : ISocketPulseReceiver
         while (!cancellationToken.IsCancellationRequested)
         {
             var message = _receiverSocket.ReceiveFrameString();
-            var result = HandleMessage(message);
+            Reply result;
+            try
+            {
+                result = HandleMessage(message);
+            } catch (Exception e)
+            {
+                result = new Reply { State = State.Error, Content = e.ToString() };
+            }
             _receiverSocket.SendFrame(JsonConvert.SerializeObject(result));
         }
         _receiverSocket.Close();

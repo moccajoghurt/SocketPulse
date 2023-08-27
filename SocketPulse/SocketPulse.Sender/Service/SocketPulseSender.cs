@@ -7,14 +7,16 @@ namespace SocketPulse.Sender.Service;
 public class SocketPulseSender : ISocketPulseSender
 {
     private readonly ISenderSocket _senderSocket;
+    private bool _printErrors;
 
     public SocketPulseSender(ISenderSocket senderSocket)
     {
         _senderSocket = senderSocket;
     }
 
-    public bool Connect(string address)
+    public bool Connect(string address, bool printErrors = true)
     {
+        _printErrors = printErrors;
         return _senderSocket.InitSocket(address);
     }
 
@@ -28,8 +30,11 @@ public class SocketPulseSender : ISocketPulseSender
         var requestString = JsonConvert.SerializeObject(request);
         _senderSocket.SendFrame(requestString);
         var replyString = _senderSocket.ReceiveFrameString();
-        return JsonConvert.DeserializeObject<Reply>(replyString) ??
-               throw new InvalidOperationException("Could not deserialize reply");
+        var reply = JsonConvert.DeserializeObject<Reply>(replyString) ??
+                    throw new InvalidOperationException("Could not deserialize reply");
+        if (_printErrors && reply.State == State.Error)
+            Console.WriteLine("SocketPulseSender: Exception occurred on remote machine:\n" + reply.Content);
+        return reply;
     }
 
     public uint GetTickRate()

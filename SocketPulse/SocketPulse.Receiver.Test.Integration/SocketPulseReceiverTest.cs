@@ -82,4 +82,24 @@ public class SocketPulseReceiverTest
         Assert.Contains(content.Data, s => s.Contains("GetTickRate"));
         service?.Stop();
     }
+
+    [Fact]
+    public void InvalidRequest_ReturnsErrorReply()
+    {
+        // Arrange
+        var service = _serviceProvider.GetService<ISocketPulseReceiver>();
+        var cts = new CancellationTokenSource();
+        Task.Run(() => service?.Start("tcp://*:8080", cts.Token), cts.Token);
+        using var client = new RequestSocket("tcp://localhost:8080");
+        var message = JsonConvert.SerializeObject("invalid data");
+
+        // Act
+        client.SendFrame(message);
+        var replyStr = client.ReceiveFrameString();
+
+        // Assert
+        var reply = JsonConvert.DeserializeObject<Reply>(replyStr);
+        Assert.Equal(State.Error, reply?.State);
+        service?.Stop();
+    }
 }
