@@ -1,4 +1,5 @@
 ﻿using SocketPulse.Receiver.CommandGeneration;
+using SocketPulse.Receiver.Helpers;
 
 namespace SocketPulse.Receiver.CommandInvocation;
 
@@ -19,8 +20,9 @@ public class CommandInvoker : ICommandInvoker
 
     public T GetCommand<T>(string name)
     {
-        var commandName = _conditions.Find(s => s.Contains(name)) ??
-                          _actions.Find(s => s.Contains(name)) ?? _dataNodes.Find(s => s.Contains(name));
+        var commandName = _conditions.Find(s => ClassNameExtractor.Extract(s) == name) ??
+                          _actions.Find(s => ClassNameExtractor.Extract(s) == name) ??
+                          _dataNodes.Find(s => ClassNameExtractor.Extract(s) == name);
         if (commandName == null) throw new InvalidOperationException($"{name} not found");
         var type = Type.GetType(commandName ?? throw new InvalidOperationException($"{name} not found"));
         var service = (T)_serviceProvider.GetService(type ?? throw new InvalidOperationException($"{name} not found"))!;

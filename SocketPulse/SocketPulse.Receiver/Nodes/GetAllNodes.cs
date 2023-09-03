@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SocketPulse.Receiver.CommandGeneration;
+using SocketPulse.Receiver.Helpers;
 using SocketPulse.Receiver.Interfaces;
 using SocketPulse.Shared;
 
@@ -18,19 +19,10 @@ public class GetAllNodes : IData
     {
         var data = new NodeInfo
         {
-            Actions = _commandGenerator.GetActions().Select(ExtractName).ToList(),
-            Conditions = _commandGenerator.GetConditions().Select(ExtractName).ToList(),
-            Data = _commandGenerator.GetDataNodes().Select(ExtractName).ToList(),
+            Actions = _commandGenerator.GetActions().Select(ClassNameExtractor.Extract).ToList(),
+            Conditions = _commandGenerator.GetConditions().Select(ClassNameExtractor.Extract).ToList(),
+            Data = _commandGenerator.GetDataNodes().Select(ClassNameExtractor.Extract).ToList(),
         };
         return JsonConvert.SerializeObject(data, Formatting.Indented);
-    }
-
-    private string ExtractName(string input)
-    {
-        var parts = input.Split(',');
-        if (parts.Length < 2)
-            return string.Empty;
-        var subParts = parts[0].Split('.');
-        return subParts[^1];
     }
 }
