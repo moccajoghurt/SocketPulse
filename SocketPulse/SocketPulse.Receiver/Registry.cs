@@ -29,7 +29,7 @@ public static class Registry
             .Where(t => type.IsAssignableFrom(t) && t.IsClass).ToList();
         foreach (var t in types)
         {
-            services.AddScoped(t);
+            services.AddSingleton(t);
         }
     }
 }
