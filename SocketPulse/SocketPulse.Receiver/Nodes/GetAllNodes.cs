@@ -15,7 +15,7 @@ public class GetAllNodes : IData
         _commandGenerator = commandGenerator;
     }
 
-    public string Execute(List<string> arguments)
+    public string Execute(Dictionary<string, string> arguments)
     {
         var data = new NodeInfo
         {

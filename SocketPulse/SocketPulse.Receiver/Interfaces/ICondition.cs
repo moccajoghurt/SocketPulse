@@ -1,5 +1,5 @@
 ﻿namespace SocketPulse.Receiver.Interfaces;
 public interface ICondition
 {
-    public bool Execute(List<string> arguments);
+    public bool Execute(Dictionary<string, string> arguments);
 }

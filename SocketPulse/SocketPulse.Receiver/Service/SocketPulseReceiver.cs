@@ -29,12 +29,15 @@ public class SocketPulseReceiver : ISocketPulseReceiver
             try
             {
                 result = HandleMessage(message);
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 result = new Reply { State = State.Error, Content = e.ToString() };
             }
+
             _receiverSocket.SendFrame(JsonConvert.SerializeObject(result));
         }
+
         _receiverSocket.Close();
     }
 
@@ -43,36 +46,35 @@ public class SocketPulseReceiver : ISocketPulseReceiver
         _receiverSocket.Close();
     }
 
-    private Reply ExecuteAction(string function, List<string> arguments)
+    private Reply ExecuteAction(string function, Dictionary<string, string> arguments)
     {
         var action = _commandInvoker.GetCommand<IAction>(function);
         var result = action.Execute(arguments);
         return new Reply { State = result };
     }
 
-    private Reply ExecuteCondition(string function, List<string> arguments)
+    private Reply ExecuteCondition(string function, Dictionary<string, string> arguments)
     {
         var condition = _commandInvoker.GetCommand<ICondition>(function);
         var result = condition.Execute(arguments);
         return new Reply { State = result ? State.Success : State.Failure };
     }
 
-    private Reply ExecuteDataNode(string function, List<string> arguments)
+    private Reply ExecuteDataNode(string function, Dictionary<string, string> arguments)
     {
         var data = _commandInvoker.GetCommand<IData>(function);
         var result = data.Execute(arguments);
-        return new Reply {State = State.Success, Content = result};
+        return new Reply { State = State.Success, Content = result };
     }
 
     private Reply HandleMessage(string message)
     {
         var request = JsonConvert.DeserializeObject<Request>(message);
         if (request == null) throw new InvalidOperationException("Invalid request");
-        var argumentList = new List<string>();
+        var argumentList = new Dictionary<string, string>();
         if (request.Arguments != null)
-        {
-            argumentList.AddRange(request.Arguments.Select(arg => arg.ToString()).ToList());
-        }
+            argumentList = argumentList.Union(request.Arguments)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         var result = request.Type switch
         {

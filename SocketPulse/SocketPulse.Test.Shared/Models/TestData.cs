@@ -4,7 +4,7 @@ namespace SocketPulse.Test.Shared.Models;
 
 public class TestData : IData
 {
-    public string Execute(List<string> arguments)
+    public string Execute(Dictionary<string, string> arguments)
     {
         return "foo";
     }

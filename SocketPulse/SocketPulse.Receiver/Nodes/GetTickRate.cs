@@ -10,7 +10,7 @@ namespace SocketPulse.Receiver.Nodes;
 //
 public class GetTickRate : IData
 {
-    public string Execute(List<string> arguments)
+    public string Execute(Dictionary<string, string> arguments)
     {
         return SocketPulseReceiverSettings.TickRateMs.ToString();
     }

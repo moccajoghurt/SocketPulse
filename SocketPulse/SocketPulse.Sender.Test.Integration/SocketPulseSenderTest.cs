@@ -40,9 +40,9 @@ public class SocketPulseSenderTest
     }
 
     [Theory]
-    [InlineData(RequestType.Action, "TestAction", new[] { "arg1", "arg2", "arg3" })]
-    [InlineData(RequestType.Condition, "TestCondition", new[] { "arg1", "arg2", "arg3" })]
-    [InlineData(RequestType.Data, "TestData", new[] { "arg1", "arg2", "arg3" })]
+    [InlineData(RequestType.Action, "TestAction", new[] { "arg1", "arg2" })]
+    [InlineData(RequestType.Condition, "TestCondition", new[] { "arg1", "arg2" })]
+    [InlineData(RequestType.Data, "TestData", new[] { "arg1", "arg2" })]
     public void RequestSent_ShouldSucceed(RequestType type, string name, string[] arguments)
     {
         // Arrange
@@ -57,7 +57,7 @@ public class SocketPulseSenderTest
         {
             Type = type,
             Name = name,
-            Arguments = arguments.ToList()
+            Arguments = new Dictionary<string, string> { { "arg1", arguments[0] }, { "arg2", arguments[1] } }
         };
         var reply = sender?.SendRequest(request);
 

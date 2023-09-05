@@ -22,9 +22,9 @@ public class SocketPulseReceiverTest
     }
 
     [Theory]
-    [InlineData(RequestType.Action, "TestAction", new[] { "arg1", "arg2", "arg3" })]
-    [InlineData(RequestType.Condition, "TestCondition", new[] { "arg1", "arg2", "arg3" })]
-    [InlineData(RequestType.Data, "TestData", new[] { "arg1", "arg2", "arg3" })]
+    [InlineData(RequestType.Action, "TestAction", new[] { "arg1", "arg2" })]
+    [InlineData(RequestType.Condition, "TestCondition", new[] { "arg1", "arg2" })]
+    [InlineData(RequestType.Data, "TestData", new[] { "arg1", "arg2" })]
     public void ActionSent_ShouldReturnSuccess(RequestType type, string functionName, string[] arguments)
     {
         // Arrange
@@ -36,7 +36,7 @@ public class SocketPulseReceiverTest
         {
             Type = type,
             Name = functionName,
-            Arguments = new List<string>(arguments)
+            Arguments = new Dictionary<string, string> { { "arg1", arguments[0] }, { "arg2", arguments[1] } }
         };
 
         var message = JsonConvert.SerializeObject(data);

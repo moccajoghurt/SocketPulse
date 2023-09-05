@@ -4,7 +4,7 @@ namespace SocketPulse.Test.Shared.Models;
 
 public class TestCondition : ICondition
 {
-    public bool Execute(List<string> arguments)
+    public bool Execute(Dictionary<string, string> arguments)
     {
         return true;
     }

@@ -4,7 +4,7 @@ namespace SocketPulse.Receiver.Nodes;
 
 public class Ping : IData
 {
-    public string Execute(List<string> arguments)
+    public string Execute(Dictionary<string, string> arguments)
     {
         return "pong";
     }

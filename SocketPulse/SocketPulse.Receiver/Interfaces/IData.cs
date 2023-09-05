@@ -2,5 +2,5 @@
 
 public interface IData
 {
-    public string Execute(List<string> arguments);
+    public string Execute(Dictionary<string, string> arguments);
 }
