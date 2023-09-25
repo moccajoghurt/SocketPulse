@@ -2,8 +2,8 @@
 
 public interface IReceiverSocket
 {
-    public void InitSocket(string address);
-    public string ReceiveFrameString();
-    public void SendFrame(string frame);
-    public void Close();
+    void InitSocket(string address);
+    (string senderIdentity, string message) ReceiveFrameString();
+    void SendFrame(string senderIdentity, string frame);
+    void Close();
 }

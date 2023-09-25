@@ -10,15 +10,17 @@ using Xunit;
 
 namespace SocketPulse.Receiver.Test.Integration;
 
-public class SocketPulseReceiverTest
+public class SocketPulseReceiverTest : IDisposable
 {
     private readonly ServiceCollection _serviceCollection = new();
     private readonly IServiceProvider _serviceProvider;
+    private readonly CancellationTokenSource _cts;
 
     public SocketPulseReceiverTest()
     {
         _serviceCollection.AddSocketPulseReceiver(new List<Assembly> { typeof(TestAction).Assembly });
         _serviceProvider = _serviceCollection.BuildServiceProvider();
+        _cts = new CancellationTokenSource();
     }
 
     [Theory]
@@ -29,8 +31,7 @@ public class SocketPulseReceiverTest
     {
         // Arrange
         var service = _serviceProvider.GetService<ISocketPulseReceiver>();
-        var cts = new CancellationTokenSource();
-        Task.Run(() => service?.Start("tcp://*:8080", cts.Token), cts.Token);
+        Task.Run(() => service?.Start("tcp://*:8080", _cts.Token), _cts.Token);
         using var client = new RequestSocket("tcp://localhost:8080");
         var data = new Request
         {
@@ -56,9 +57,8 @@ public class SocketPulseReceiverTest
     {
         // Arrange
         var service = _serviceProvider.GetService<ISocketPulseReceiver>();
-        var cts = new CancellationTokenSource();
-        Task.Run(() => service?.Start("tcp://*:8080", cts.Token), cts.Token);
-        using var client = new RequestSocket("tcp://localhost:8080");
+        Task.Run(() => service?.Start("tcp://*:8080", _cts.Token), _cts.Token);
+        using var client = new DealerSocket("tcp://localhost:8080");
         var data = new Request
         {
             Type = RequestType.Data,
@@ -88,18 +88,36 @@ public class SocketPulseReceiverTest
     {
         // Arrange
         var service = _serviceProvider.GetService<ISocketPulseReceiver>();
-        var cts = new CancellationTokenSource();
-        Task.Run(() => service?.Start("tcp://*:8080", cts.Token), cts.Token);
-        using var client = new RequestSocket("tcp://localhost:8080");
-        var message = JsonConvert.SerializeObject("invalid data");
+
+        Task.Run(() =>
+        {
+            service?.Start("tcp://localhost:8080", _cts.Token);
+        });
+        Task.Delay(200).Wait();
+        using var client = new DealerSocket("tcp://localhost:8080");
+        // var message = JsonConvert.SerializeObject();
 
         // Act
-        client.SendFrame(message);
-        var replyStr = client.ReceiveFrameString();
+        client.SendFrame("invalid data");
+        var received = client.TryReceiveFrameString(TimeSpan.FromSeconds(2), out var replyStr);
+        if (!received)
+        {
+            Assert.False(true, "Did not receive a reply within the expected time frame.");
+        }
 
         // Assert
-        var reply = JsonConvert.DeserializeObject<Reply>(replyStr);
+        var reply = JsonConvert.DeserializeObject<Reply>(replyStr!);
         Assert.Equal(State.Error, reply?.State);
-        service?.Stop();
+        NetMQConfig.Cleanup();
+    }
+
+    public void Dispose()
+    {
+        // Release services
+        var disposableService = _serviceProvider.GetService<ISocketPulseReceiver>() as IDisposable;
+        disposableService?.Dispose();
+        _cts.Cancel();
+        _cts.Dispose();
+        Task.Delay(200).Wait();
     }
 }

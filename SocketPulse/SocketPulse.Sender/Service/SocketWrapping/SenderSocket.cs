@@ -7,17 +7,18 @@ namespace SocketPulse.Sender.Service.SocketWrapping;
 
 public class SenderSocket : ISenderSocket
 {
-    private RequestSocket? _requestSocket;
+    private DealerSocket? _dealerSocket;
+
     public bool InitSocket(string address)
     {
-        if (_requestSocket == null)
+        if (_dealerSocket == null)
         {
-            _requestSocket = new RequestSocket(address);
+            _dealerSocket = new DealerSocket(address);
         }
         else
         {
-            _requestSocket.Close();
-            _requestSocket = new RequestSocket(address);
+            _dealerSocket.Close();
+            _dealerSocket = new DealerSocket(address);
         }
 
         var ping = new Request
@@ -25,25 +26,28 @@ public class SenderSocket : ISenderSocket
             Name = "Ping",
             Type = RequestType.Data
         };
-        _requestSocket.SendFrame(JsonConvert.SerializeObject(ping));
-        var success = _requestSocket.TryReceiveFrameString(TimeSpan.FromSeconds(10), out var result);
-        if (!success || result == null) return false;
-        var reply = JsonConvert.DeserializeObject<Reply>(result);
+
+        _dealerSocket.SendFrame(JsonConvert.SerializeObject(ping));
+
+        var success = _dealerSocket.TryReceiveFrameString(TimeSpan.FromSeconds(3), out var result);
+        if (!success) return false;
+
+        var reply = JsonConvert.DeserializeObject<Reply>(result!);
         return reply?.Content == "pong";
     }
 
     public string ReceiveFrameString()
     {
-        return (_requestSocket ?? throw new InvalidOperationException("Socket not initialized")).ReceiveFrameString();
+        return (_dealerSocket ?? throw new InvalidOperationException("Socket not initialized")).ReceiveFrameString();
     }
 
     public void SendFrame(string frame)
     {
-        (_requestSocket ?? throw new InvalidOperationException("Socket not initialized")).SendFrame(frame);
+        (_dealerSocket ?? throw new InvalidOperationException("Socket not initialized")).SendFrame(frame);
     }
 
     public void Close()
     {
-        _requestSocket?.Close();
+        _dealerSocket?.Close();
     }
 }

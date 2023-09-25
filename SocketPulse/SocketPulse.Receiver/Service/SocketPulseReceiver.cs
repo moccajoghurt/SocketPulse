@@ -20,22 +20,22 @@ public class SocketPulseReceiver : ISocketPulseReceiver
     public void Start(string address, CancellationToken cancellationToken, uint tickRateMs = 100)
     {
         SocketPulseReceiverSettings.TickRateMs = tickRateMs;
-        _receiverSocket.InitSocket(address);
+        _receiverSocket.InitSocket("@" + address);
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            var message = _receiverSocket.ReceiveFrameString();
+            var (senderIdentity, receivedMessage) = _receiverSocket.ReceiveFrameString();
             Reply result;
             try
             {
-                result = HandleMessage(message);
+                result = HandleMessage(receivedMessage);
             }
             catch (Exception e)
             {
                 result = new Reply { State = State.Error, Content = e.ToString() };
             }
 
-            _receiverSocket.SendFrame(JsonConvert.SerializeObject(result));
+            _receiverSocket.SendFrame(senderIdentity, JsonConvert.SerializeObject(result));
         }
 
         _receiverSocket.Close();
@@ -44,6 +44,11 @@ public class SocketPulseReceiver : ISocketPulseReceiver
     public void Stop()
     {
         _receiverSocket.Close();
+    }
+
+    public void Dispose()
+    {
+        Stop();
     }
 
     private Reply ExecuteAction(string function, Dictionary<string, string> arguments)

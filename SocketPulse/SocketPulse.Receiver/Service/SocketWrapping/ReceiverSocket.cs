@@ -5,33 +5,37 @@ namespace SocketPulse.Receiver.Service.SocketWrapping;
 
 public class ReceiverSocket : IReceiverSocket
 {
-    private ResponseSocket? _responseSocket;
+    private RouterSocket? _routerSocket;
 
     public void InitSocket(string address)
     {
-        if (_responseSocket == null)
+        if (_routerSocket == null)
         {
-            _responseSocket = new ResponseSocket(address);
+            _routerSocket = new RouterSocket(address);
         }
         else
         {
-            _responseSocket.Close();
-            _responseSocket = new ResponseSocket(address);
+            _routerSocket.Close();
+            _routerSocket = new RouterSocket(address);
         }
     }
 
-    public string ReceiveFrameString()
+    public (string senderIdentity, string message) ReceiveFrameString()
     {
-        return (_responseSocket ?? throw new InvalidOperationException("Socket not initialized")).ReceiveFrameString();
+        var senderIdentity = (_routerSocket ?? throw new InvalidOperationException("Socket not initialized"))
+            .ReceiveFrameString();
+        var message = _routerSocket.ReceiveFrameString();
+        return (senderIdentity, message);
     }
 
-    public void SendFrame(string frame)
+    public void SendFrame(string senderIdentity, string frame)
     {
-        (_responseSocket ?? throw new InvalidOperationException("Socket not initialized")).SendFrame(frame);
+        var socket = _routerSocket ?? throw new InvalidOperationException("Socket not initialized");
+        socket.SendMoreFrame(senderIdentity).SendFrame(frame);
     }
 
     public void Close()
     {
-        _responseSocket?.Close();
+        _routerSocket?.Close();
     }
 }
