@@ -11,6 +11,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketPulse.Sender", "SocketPulse.Sender\SocketPulse.Sender.csproj", "{CF5D425D-D8BD-49C2-8CFD-74672024FB85}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{44E46740-7C12-4F1A-8FE7-DF697460364B}"
+	ProjectSection(SolutionItems) = preProject
+		Dockerfile = Dockerfile
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketPulse.Sender.Test.Integration", "SocketPulse.Sender.Test.Integration\SocketPulse.Sender.Test.Integration.csproj", "{5C2D36E7-DD47-4033-B02E-10A2B74D3509}"
 EndProject

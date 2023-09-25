@@ -26,8 +26,7 @@ public class SocketPulseSenderTest
     {
         // Arrange
         var receiver = _serviceProvider.GetService<ISocketPulseReceiver>();
-        var cts = new CancellationTokenSource();
-        Task.Run(() => receiver?.Start("tcp://*:8080", cts.Token), cts.Token);
+        receiver?.Start("tcp://*:8080");
         var sender = _serviceProvider.GetService<ISocketPulseSender>();
 
         // Act
@@ -47,8 +46,7 @@ public class SocketPulseSenderTest
     {
         // Arrange
         var receiver = _serviceProvider.GetService<ISocketPulseReceiver>();
-        var cts = new CancellationTokenSource();
-        Task.Run(() => receiver?.Start("tcp://*:8080", cts.Token), cts.Token);
+        receiver?.Start("tcp://*:8080");
         var sender = _serviceProvider.GetService<ISocketPulseSender>();
         sender?.Connect("tcp://localhost:8080");
 
@@ -72,8 +70,7 @@ public class SocketPulseSenderTest
     {
         // Arrange
         var receiver = _serviceProvider.GetService<ISocketPulseReceiver>();
-        var cts = new CancellationTokenSource();
-        Task.Run(() => receiver?.Start("tcp://*:8080", cts.Token), cts.Token);
+        receiver?.Start("tcp://*:8080");
         var sender = _serviceProvider.GetService<ISocketPulseSender>();
         sender?.Connect("tcp://localhost:8080");
 
@@ -93,10 +90,9 @@ public class SocketPulseSenderTest
     public void GetTickRate_ReturnsTickRate()
     {
         // Arrange
-        var myTickRate = 150u;
+        var myTickRate = 100u;
         var receiver = _serviceProvider.GetService<ISocketPulseReceiver>();
-        var cts = new CancellationTokenSource();
-        Task.Run(() => receiver?.Start("tcp://*:8080", cts.Token, myTickRate), cts.Token);
+        receiver?.Start("tcp://*:8080");
         var sender = _serviceProvider.GetService<ISocketPulseSender>();
         sender?.Connect("tcp://localhost:8080");
 

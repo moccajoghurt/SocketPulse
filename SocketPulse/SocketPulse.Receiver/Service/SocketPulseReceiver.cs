@@ -1,7 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using NetMQ;
+using NetMQ.Sockets;
+using Newtonsoft.Json;
 using SocketPulse.Receiver.CommandInvocation;
 using SocketPulse.Receiver.Interfaces;
-using SocketPulse.Receiver.Service.SocketWrapping;
 using SocketPulse.Shared;
 
 namespace SocketPulse.Receiver.Service;
@@ -9,46 +10,67 @@ namespace SocketPulse.Receiver.Service;
 public class SocketPulseReceiver : ISocketPulseReceiver
 {
     private readonly ICommandInvoker _commandInvoker;
-    private readonly IReceiverSocket _receiverSocket;
 
-    public SocketPulseReceiver(ICommandInvoker commandInvoker, IReceiverSocket receiverSocket)
+    private volatile bool _isRunning;
+    private Thread? _thread;
+
+    public SocketPulseReceiver(ICommandInvoker commandInvoker)
     {
         _commandInvoker = commandInvoker;
-        _receiverSocket = receiverSocket;
     }
 
-    public void Start(string address, CancellationToken cancellationToken, uint tickRateMs = 100)
+    public void Start(string address, uint tickRateMs = 100)
     {
+        if (_isRunning) throw new InvalidOperationException("Already running");
         SocketPulseReceiverSettings.TickRateMs = tickRateMs;
-        _receiverSocket.InitSocket("@" + address);
+        _isRunning = true;
+        _thread = new Thread(() => Worker(address));
+        _thread.Start();
+    }
 
-        while (!cancellationToken.IsCancellationRequested)
+    public void Stop()
+    {
+        _isRunning = false;
+        _thread?.Join(); // because of "using" the socket will be disposed
+    }
+
+    private void Worker(string address)
+    {
+        using var routerSocket = new RouterSocket();
+        routerSocket.Bind(address);
+
+        while (_isRunning)
         {
-            var (senderIdentity, receivedMessage) = _receiverSocket.ReceiveFrameString();
+            var msg = new NetMQMessage();
+            try
+            {
+                routerSocket.TryReceiveMultipartMessage(TimeSpan.FromMilliseconds(100), ref msg, 2);
+            }
+            catch (NetMQException)
+            {
+                // NetMQ internally uses exceptions that we don't worry about
+            }
+
+            if (msg == null || msg.FrameCount == 0) continue;
+            if (msg.FrameCount != 2)
+                throw new InvalidOperationException(
+                    "Unexpected msg received. The dealer socket should send his identity and the message");
+            var identity = msg.Pop();
+            var content = msg.Pop().ConvertToString();
             Reply result;
             try
             {
-                result = HandleMessage(receivedMessage);
+                result = HandleMessage(content);
             }
             catch (Exception e)
             {
                 result = new Reply { State = State.Error, Content = e.ToString() };
             }
-
-            _receiverSocket.SendFrame(senderIdentity, JsonConvert.SerializeObject(result));
+            NetMQMessage reply = new();
+            reply.Append(identity);
+            reply.Append(JsonConvert.SerializeObject(result));
+            routerSocket.TrySendMultipartMessage(reply);
         }
-
-        _receiverSocket.Close();
-    }
-
-    public void Stop()
-    {
-        _receiverSocket.Close();
-    }
-
-    public void Dispose()
-    {
-        Stop();
     }
 
     private Reply ExecuteAction(string function, Dictionary<string, string> arguments)

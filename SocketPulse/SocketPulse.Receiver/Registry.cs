@@ -4,7 +4,6 @@ using SocketPulse.Receiver.CommandGeneration;
 using SocketPulse.Receiver.CommandInvocation;
 using SocketPulse.Receiver.Interfaces;
 using SocketPulse.Receiver.Service;
-using SocketPulse.Receiver.Service.SocketWrapping;
 
 namespace SocketPulse.Receiver;
 
@@ -14,7 +13,6 @@ public static class Registry
     {
         services.AddSingleton<ICommandGenerator, CommandGenerator>();
         services.AddSingleton<ICommandInvoker, CommandInvoker>();
-        services.AddSingleton<IReceiverSocket, ReceiverSocket>();
         services.AddSingleton<ISocketPulseReceiver, SocketPulseReceiver>();
 
         RegisterCommandType(services, typeof(ICondition), assemblies);
