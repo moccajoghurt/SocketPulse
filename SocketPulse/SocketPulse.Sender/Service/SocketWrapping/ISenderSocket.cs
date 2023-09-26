@@ -1,9 +1,12 @@
-﻿namespace SocketPulse.Sender.Service.SocketWrapping;
+﻿using SocketPulse.Shared;
+
+namespace SocketPulse.Sender.Service.SocketWrapping;
 
 public interface ISenderSocket
 {
-    public bool InitSocket(string address);
-    public string ReceiveFrameString();
-    public void SendFrame(string frame);
+    public bool Connect(string address);
+    public Reply SendRequest(Request request);
     public void Close();
+    public uint GetTickRate();
+    public NodeInfo GetAllNodes();
 }

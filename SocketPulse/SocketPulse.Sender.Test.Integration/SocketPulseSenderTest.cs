@@ -27,15 +27,15 @@ public class SocketPulseSenderTest
         // Arrange
         var receiver = _serviceProvider.GetService<ISocketPulseReceiver>();
         receiver?.Start("tcp://*:8080");
-        var sender = _serviceProvider.GetService<ISocketPulseSender>();
+        var sender = SocketPulseSenderFactory.CreateSenderSocket();
 
         // Act
-        var result = sender?.Connect("tcp://localhost:8080");
+        var result = sender.Connect("tcp://localhost:8080");
 
         // Assert
         Assert.True(result);
         receiver?.Stop();
-        sender?.Disconnect();
+        sender.Close();
     }
 
     [Theory]
@@ -47,8 +47,8 @@ public class SocketPulseSenderTest
         // Arrange
         var receiver = _serviceProvider.GetService<ISocketPulseReceiver>();
         receiver?.Start("tcp://*:8080");
-        var sender = _serviceProvider.GetService<ISocketPulseSender>();
-        sender?.Connect("tcp://localhost:8080");
+        var sender = SocketPulseSenderFactory.CreateSenderSocket();
+        sender.Connect("tcp://localhost:8080");
 
         // Act
         var request = new Request
@@ -57,12 +57,12 @@ public class SocketPulseSenderTest
             Name = name,
             Arguments = new Dictionary<string, string> { { "arg1", arguments[0] }, { "arg2", arguments[1] } }
         };
-        var reply = sender?.SendRequest(request);
+        var reply = sender.SendRequest(request);
 
         // Assert
-        Assert.Equal(State.Success, reply?.State);
+        Assert.Equal(State.Success, reply.State);
         receiver?.Stop();
-        sender?.Disconnect();
+        sender.Close();
     }
 
     [Fact]
@@ -71,11 +71,11 @@ public class SocketPulseSenderTest
         // Arrange
         var receiver = _serviceProvider.GetService<ISocketPulseReceiver>();
         receiver?.Start("tcp://*:8080");
-        var sender = _serviceProvider.GetService<ISocketPulseSender>();
-        sender?.Connect("tcp://localhost:8080");
+        var sender = SocketPulseSenderFactory.CreateSenderSocket();
+        sender.Connect("tcp://localhost:8080");
 
         // Act
-        var nodes = sender?.GetAllNodes();
+        var nodes = sender.GetAllNodes();
 
         // Assert
         Assert.NotNull(nodes);
@@ -83,7 +83,7 @@ public class SocketPulseSenderTest
         Assert.True(nodes.Actions.Any());
         Assert.True(nodes.Conditions.Any());
         receiver?.Stop();
-        sender?.Disconnect();
+        sender.Close();
     }
 
     [Fact]
@@ -93,16 +93,15 @@ public class SocketPulseSenderTest
         var myTickRate = 100u;
         var receiver = _serviceProvider.GetService<ISocketPulseReceiver>();
         receiver?.Start("tcp://*:8080");
-        var sender = _serviceProvider.GetService<ISocketPulseSender>();
-        sender?.Connect("tcp://localhost:8080");
+        var sender = SocketPulseSenderFactory.CreateSenderSocket();
+        sender.Connect("tcp://localhost:8080");
 
         // Act
-        var tickRate = sender?.GetTickRate();
+        var tickRate = sender.GetTickRate();
 
         // Assert
-        Assert.NotNull(tickRate);
         Assert.Equal(myTickRate, tickRate);
         receiver?.Stop();
-        sender?.Disconnect();
+        sender.Close();
     }
 }

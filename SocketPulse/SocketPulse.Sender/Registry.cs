@@ -9,6 +9,5 @@ public static class Registry
     public static void AddSocketPulseSender(this IServiceCollection services)
     {
         services.AddSingleton<ISenderSocket, SenderSocket>();
-        services.AddSingleton<ISocketPulseSender, SocketPulseSender>();
     }
 }

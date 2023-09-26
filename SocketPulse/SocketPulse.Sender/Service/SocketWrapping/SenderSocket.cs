@@ -7,26 +7,15 @@ namespace SocketPulse.Sender.Service.SocketWrapping;
 
 public class SenderSocket : ISenderSocket
 {
-    private DealerSocket? _dealerSocket;
-
-    public bool InitSocket(string address)
+    private readonly DealerSocket _dealerSocket = new();
+    public bool Connect(string address)
     {
-        if (_dealerSocket == null)
-        {
-            _dealerSocket = new DealerSocket(address);
-        }
-        else
-        {
-            _dealerSocket.Close();
-            _dealerSocket = new DealerSocket(address);
-        }
-
+        _dealerSocket.Connect(address);
         var ping = new Request
         {
             Name = "Ping",
             Type = RequestType.Data
         };
-
         _dealerSocket.SendFrame(JsonConvert.SerializeObject(ping));
 
         var success = _dealerSocket.TryReceiveFrameString(TimeSpan.FromSeconds(3), out var result);
@@ -36,18 +25,37 @@ public class SenderSocket : ISenderSocket
         return reply?.Content == "pong";
     }
 
-    public string ReceiveFrameString()
+    public Reply SendRequest(Request request)
     {
-        return (_dealerSocket ?? throw new InvalidOperationException("Socket not initialized")).ReceiveFrameString();
-    }
-
-    public void SendFrame(string frame)
-    {
-        (_dealerSocket ?? throw new InvalidOperationException("Socket not initialized")).SendFrame(frame);
+        var requestString = JsonConvert.SerializeObject(request);
+        _dealerSocket.SendFrame(requestString);
+        var replyString = _dealerSocket.ReceiveFrameString();
+        var reply = JsonConvert.DeserializeObject<Reply>(replyString) ??
+                    throw new InvalidOperationException("Could not deserialize reply");
+        if (reply.State == State.Error)
+            Console.WriteLine("SocketPulseSender: Exception occurred on remote machine:\n" + reply.Content);
+        return reply;
     }
 
     public void Close()
     {
-        _dealerSocket?.Close();
+        _dealerSocket.Close();
+    }
+
+    public uint GetTickRate()
+    {
+        var request = new Request { Type = RequestType.Data, Name = "GetTickRate" };
+        var reply = SendRequest(request);
+        return Convert.ToUInt32(reply.Content);
+    }
+
+    public NodeInfo GetAllNodes()
+    {
+        var request = new Request { Type = RequestType.Data, Name = "GetAllNodes" };
+        var reply = SendRequest(request);
+        return JsonConvert.DeserializeObject<NodeInfo>(reply.Content ??
+                                                       throw new InvalidOperationException(
+                                                           "Could not deserialize GetAllNodes")) ??
+               throw new InvalidOperationException("Could not deserialize GetAllNodes");
     }
 }
