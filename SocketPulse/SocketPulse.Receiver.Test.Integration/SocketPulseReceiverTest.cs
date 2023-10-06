@@ -103,7 +103,6 @@ public class SocketPulseReceiverTest
         {
             service?.Stop();
             dealer.Close();
-            NetMQConfig.Cleanup();
         }
     }
 }
