@@ -13,7 +13,6 @@ public class SocketPulseReceiver : ISocketPulseReceiver
 
     private volatile bool _isRunning;
     private Thread? _thread;
-    private RouterSocket _routerSocket = new();
 
     public SocketPulseReceiver(ICommandInvoker commandInvoker)
     {
@@ -32,21 +31,20 @@ public class SocketPulseReceiver : ISocketPulseReceiver
     public void Stop()
     {
         _isRunning = false;
-        _thread?.Join();
-        _routerSocket.Dispose();
+        _thread?.Join(); // because of "using" the socket will be disposed
     }
 
     private void Worker(string address)
     {
-        _routerSocket = new RouterSocket();
-        _routerSocket.Bind(address);
+        using var routerSocket = new RouterSocket();
+        routerSocket.Bind(address);
 
         while (_isRunning)
         {
             var msg = new NetMQMessage();
             try
             {
-                _routerSocket.TryReceiveMultipartMessage(TimeSpan.FromMilliseconds(100), ref msg, 2);
+                routerSocket.TryReceiveMultipartMessage(TimeSpan.FromMilliseconds(100), ref msg, 2);
             }
             catch (NetMQException)
             {
@@ -59,22 +57,19 @@ public class SocketPulseReceiver : ISocketPulseReceiver
                     "Unexpected msg received. The dealer socket should send his identity and the message");
             var identity = msg.Pop();
             var content = msg.Pop().ConvertToString();
-            Task.Run(() =>
+            Reply result;
+            try
             {
-                Reply result;
-                try
-                {
-                    result = HandleMessage(content);
-                }
-                catch (Exception e)
-                {
-                    result = new Reply { State = State.Error, Content = e.ToString() };
-                }
-                NetMQMessage reply = new();
-                reply.Append(identity);
-                reply.Append(JsonConvert.SerializeObject(result));
-                _routerSocket.TrySendMultipartMessage(reply);
-            });
+                result = HandleMessage(content);
+            }
+            catch (Exception e)
+            {
+                result = new Reply { State = State.Error, Content = e.ToString() };
+            }
+            NetMQMessage reply = new();
+            reply.Append(identity);
+            reply.Append(JsonConvert.SerializeObject(result));
+            routerSocket.TrySendMultipartMessage(reply);
         }
     }
 
