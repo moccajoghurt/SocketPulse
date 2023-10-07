@@ -40,9 +40,12 @@ public class SocketPulseSenderTest
 
     [Theory]
     [InlineData(RequestType.Action, "TestAction", new[] { "arg1", "arg2" })]
+    [InlineData(RequestType.Action, "TestAction", new[] { "arg1", "arg2" }, 1000)]
     [InlineData(RequestType.Condition, "TestCondition", new[] { "arg1", "arg2" })]
+    [InlineData(RequestType.Condition, "TestCondition", new[] { "arg1", "arg2" }, 1000)]
     [InlineData(RequestType.Data, "TestData", new[] { "arg1", "arg2" })]
-    public void RequestSent_ShouldSucceed(RequestType type, string name, string[] arguments)
+    [InlineData(RequestType.Data, "TestData", new[] { "arg1", "arg2" }, 1000)]
+    public void RequestSent_ShouldSucceed(RequestType type, string name, string[] arguments, int timeoutMs = 0)
     {
         // Arrange
         var receiver = _serviceProvider.GetService<ISocketPulseReceiver>();
@@ -57,7 +60,9 @@ public class SocketPulseSenderTest
             Name = name,
             Arguments = new Dictionary<string, string> { { "arg1", arguments[0] }, { "arg2", arguments[1] } }
         };
-        var reply = sender.SendRequest(request);
+        var reply = timeoutMs == 0
+            ? sender.SendRequest(request)
+            : sender.SendRequest(request, TimeSpan.FromMilliseconds(timeoutMs));
 
         // Assert
         Assert.Equal(State.Success, reply.State);

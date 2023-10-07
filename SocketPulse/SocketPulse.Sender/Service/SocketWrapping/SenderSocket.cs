@@ -8,6 +8,7 @@ namespace SocketPulse.Sender.Service.SocketWrapping;
 public class SenderSocket : ISenderSocket
 {
     private readonly DealerSocket _dealerSocket = new();
+
     public bool Connect(string address)
     {
         _dealerSocket.Connect(address);
@@ -25,11 +26,26 @@ public class SenderSocket : ISenderSocket
         return reply?.Content == "pong";
     }
 
-    public Reply SendRequest(Request request)
+    public Reply SendRequest(Request request, TimeSpan? timeout = null)
     {
         var requestString = JsonConvert.SerializeObject(request);
-        _dealerSocket.SendFrame(requestString);
-        var replyString = _dealerSocket.ReceiveFrameString();
+        if (timeout == null)
+        {
+            _dealerSocket.SendFrame(requestString);
+        }
+        else
+        {
+            var success = _dealerSocket.TrySendFrame((TimeSpan)timeout, requestString);
+            if (!success) throw new TimeoutException("Request timed out");
+        }
+
+        string replyString;
+        if (timeout == null)
+            replyString = _dealerSocket.ReceiveFrameString();
+        else
+            replyString = _dealerSocket.TryReceiveFrameString(timeout.Value, out var result)
+                ? result
+                : throw new TimeoutException("Request timed out");
         var reply = JsonConvert.DeserializeObject<Reply>(replyString) ??
                     throw new InvalidOperationException("Could not deserialize reply");
         if (reply.State == State.Error)
