@@ -60,9 +60,16 @@ public class SocketPulseSenderTest
             Name = name,
             Arguments = new Dictionary<string, string> { { "arg1", arguments[0] }, { "arg2", arguments[1] } }
         };
-        var reply = timeoutMs == 0
-            ? sender.SendRequest(request)
-            : sender.SendRequest(request, TimeSpan.FromMilliseconds(timeoutMs));
+        Reply reply;
+        if (timeoutMs == 0)
+        {
+            reply = sender.SendRequest(request);
+        }
+        else
+        {
+            sender.TrySendRequest(request, TimeSpan.FromMilliseconds(timeoutMs), out var r);
+            reply = r!;
+        }
 
         // Assert
         Assert.Equal(State.Success, reply.State);

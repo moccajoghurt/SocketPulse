@@ -26,31 +26,40 @@ public class SenderSocket : ISenderSocket
         return reply?.Content == "pong";
     }
 
-    public Reply SendRequest(Request request, TimeSpan? timeout = null)
+    public Reply SendRequest(Request request)
     {
         var requestString = JsonConvert.SerializeObject(request);
-        if (timeout == null)
-        {
-            _dealerSocket.SendFrame(requestString);
-        }
-        else
-        {
-            var success = _dealerSocket.TrySendFrame((TimeSpan)timeout, requestString);
-            if (!success) throw new TimeoutException("Request timed out");
-        }
+        _dealerSocket.SendFrame(requestString);
 
-        string replyString;
-        if (timeout == null)
-            replyString = _dealerSocket.ReceiveFrameString();
-        else
-            replyString = _dealerSocket.TryReceiveFrameString(timeout.Value, out var result)
-                ? result
-                : throw new TimeoutException("Request timed out");
+        var replyString = _dealerSocket.ReceiveFrameString();
         var reply = JsonConvert.DeserializeObject<Reply>(replyString) ??
                     throw new InvalidOperationException("Could not deserialize reply");
         if (reply.State == State.Error)
             Console.WriteLine("SocketPulseSender: Exception occurred on remote machine:\n" + reply.Content);
         return reply;
+    }
+
+    public bool TrySendRequest(Request request, TimeSpan timeout, out Reply? reply)
+    {
+        var requestString = JsonConvert.SerializeObject(request);
+        var success = _dealerSocket.TrySendFrame(timeout, requestString);
+        if (!success)
+        {
+            reply = null;
+            return false;
+        }
+
+        success = _dealerSocket.TryReceiveFrameString(timeout, out var receiveString);
+        if (!success)
+        {
+            reply = null;
+            return false;
+        }
+        reply = JsonConvert.DeserializeObject<Reply>(receiveString!) ??
+                    throw new InvalidOperationException("Could not deserialize reply");
+        if (reply.State == State.Error)
+            Console.WriteLine("SocketPulseSender: Exception occurred on remote machine:\n" + reply.Content);
+        return true;
     }
 
     public void Close()
