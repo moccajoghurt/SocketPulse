@@ -19,11 +19,19 @@ public class SenderSocket : ISenderSocket
         };
         _dealerSocket.SendFrame(JsonConvert.SerializeObject(ping));
 
-        var success = _dealerSocket.TryReceiveFrameString(TimeSpan.FromSeconds(3), out var result);
-        if (!success) return false;
-
-        var reply = JsonConvert.DeserializeObject<Reply>(result!);
-        return reply?.Content == "pong";
+        // Keep receiving packets until one packet times out in order to handle potential pending pong packets
+        var connected = false;
+        while (true)
+        {
+            var success = _dealerSocket.TryReceiveFrameString(TimeSpan.FromSeconds(3), out var result);
+            if (success && !connected)
+            {
+                var reply = JsonConvert.DeserializeObject<Reply>(result!);
+                connected = reply?.Content == "pong";
+            }
+            if (!success) break;
+        }
+        return connected;
     }
 
     public Reply SendRequest(Request request)
